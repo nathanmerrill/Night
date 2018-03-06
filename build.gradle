@@ -1,0 +1,51 @@
+configurations {
+    compile
+}
+
+group 'com.discoverlsp'
+version '1.0.0'
+
+
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'application'
+
+// Checker Framework pluggable type-checking
+apply from: "checkerframework.gradle"
+
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    compile group: 'org.slf4j',                     name: 'slf4j-api',              version: '1.7.25'
+    compile group: 'ch.qos.logback',                name: 'logback-classic',        version: '1.2.2'
+    compile group: 'info.picocli',                  name: 'picocli',                version: '2.0.1'
+//    compile group: 'com.google.guava',              name: 'guava',                  version: '23.6-jre'
+
+    compile group: 'org.checkerframework',          name: 'jdk8',                   version: '2.4.0'
+    api group: 'org.checkerframework.annotatedlib',          name: 'guava',                   version: '23.6-jre'
+
+    testCompile group: 'org.testng',                name: 'testng',                 version: '6.11'
+
+}
+
+test.testLogging.showStandardStreams = true
+
+mainClassName = 'com.nmerrill.night.Main'
+
+jar {
+    manifest {
+        attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
+            'Main-Class': mainClassName,
+        )
+    }
+    baseName = 'night'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}

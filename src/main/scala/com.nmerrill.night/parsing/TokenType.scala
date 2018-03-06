@@ -1,0 +1,14 @@
+package com.nmerrill.night.parsing
+
+object TokenType extends Enumeration {
+  type TokenType = Value
+  val
+  //Braces
+  LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, LEFT_BRACKET, RIGHT_BRACKET, LEFT_ANGLE, RIGHT_ANGLE,
+  // Operators
+  COMMA, DOT, DOT_QUESTION, MINUS, PLUS, SEMICOLON, SLASH, ASTERISK, QUESTION, ARROW, BAR, AMPERSAND, ASSIGNMENT,
+  // Literals
+  IDENTIFIER, STRING, INTEGER, DECIMAL,
+  // Prefix/suffixes
+  LEFT_BRACKET_PREFIX, INTEGER_SUFFIX, DECIMAL_SUFFIX, STRING_PREFIX = Value
+}
