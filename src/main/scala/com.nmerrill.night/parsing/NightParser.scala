@@ -1,6 +1,8 @@
 package com.nmerrill.night.parsing
 
-import scala.util.parsing.combinator.RegexParsers
+import com.nmerrill.night.parsing.BinaryOperator.BinaryOperator
+
+import scala.util.parsing.combinator.{PackratParsers, RegexParsers}
 
 trait Expression extends Statement{
 
@@ -19,7 +21,7 @@ object Unit extends Expression
 case class LiteralInt(int: String) extends Literal
 case class LiteralString(string: String) extends Literal
 case class LiteralBoolean(bool: Boolean) extends Literal
-case class BinaryOperation(expr1: Expression, operator: BinaryOperation, expr2: Expression) extends Expression
+case class BinaryOperation(expr1: Expression, operator: BinaryOperator, expr2: Expression) extends Expression
 case class PropertyAccess(expr: Expression, name: String) extends Expression
 case class FunctionCall(expr: Expression, arguments: List[Expression]) extends Expression
 case class If(condition: Expression, truthy: Expression, falsy: Expression) extends Expression
@@ -38,18 +40,29 @@ object BinaryOperator extends Enumeration {
 }
 
 
-class SimpleParsers extends RegexParsers {
+class SimpleParsers extends RegexParsers with PackratParsers {
   def bool: Parser[LiteralBoolean]   = """true|false""".r       ^^ { a => LiteralBoolean(a.eq("true")) }
-  def int: Parser[LiteralInt]    = """(-?0|[1-9]\d*)""".r       ^^ { LiteralInt }
-  def singleQuoteString: Parser[LiteralString] = """'.*'""".r   ^^ { a => LiteralString(a.substring(1, a.length-1)) }
-  def doubleQuoteString: Parser[LiteralString] = """".*""".r    ^^ { a => LiteralString(a.substring(1, a.length-1)) }
+  def int: Parser[LiteralInt]    = """(0|-?[1-9]\d*)""".r       ^^ { LiteralInt }
+  def singleQuoteString: Parser[LiteralString] = """'[^\']*'""".r   ^^ { a => LiteralString(a.substring(1, a.length-1)) }
+  def doubleQuoteString: Parser[LiteralString] = """"[^\"]*"""".r   ^^ { a => LiteralString(a.substring(1, a.length-1)) }
+  def lessThan: Parser[BinaryOperator] = "lt"                   ^^ { _ => BinaryOperator.LessThan}
+  def greaterThan: Parser[BinaryOperator] = "gt"                ^^ { _ => BinaryOperator.GreaterThan}
+  def equals: Parser[BinaryOperator] = "eq"                     ^^ { _ => BinaryOperator.Equals}
+  def addition: Parser[BinaryOperator] = "+"                    ^^ { _ => BinaryOperator.Addition}
+  def subtraction: Parser[BinaryOperator] = "-"                 ^^ { _ => BinaryOperator.Subtraction}
+  def multiplication: Parser[BinaryOperator] = "*"              ^^ { _ => BinaryOperator.Multiplication}
+
+  def binaryOperator: Parser[BinaryOperator] = lessThan | greaterThan | equals | addition | subtraction | multiplication
+  def binaryOperation: Parser[BinaryOperation] = expression ~ binaryOperator ~ expression ^^ { case e1 ~ op ~ e2 => BinaryOperation(e1, op, e2)}
   def string: Parser[LiteralString] = singleQuoteString | doubleQuoteString
   def literal: Parser[Literal] = bool | int | string
+  lazy val expression: PackratParser[Expression] = binaryOperation | literal
+
 }
 
 object NightParser extends SimpleParsers {
   def main(args: Array[String]): Unit = {
-    parse(literal, "\"test\"") match {
+    parseAll(expression, "\"test\" eq 1") match {
       case Success(matched,_) => println(matched)
       case Failure(msg,_) => println("FAILURE: " + msg)
       case Error(msg,_) => println("ERROR: " + msg)

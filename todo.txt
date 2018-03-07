@@ -1,0 +1,119 @@
+TODO:
+MVP:
+	Integer, String, Boolean
+	Addition, Multiplication, Subtraction, Equality, Gt/Lt, Dot-access, Function call
+	If
+	Functions:
+		Parameters
+		Return value
+		Where
+		Recursion
+	Classes
+		Single Constructor
+		Properties
+		Methods
+	Type:
+	    Function/class parameter assertions
+	    Interface checks
+	    Boolean methods
+
+
+Parsing text to IR:
+	ANTLR Grammar:
+		Integer, String, Boolean
+		Addition, Multplication, Subtraction
+		Equality, Gt/Lt
+		Dot-access, Function call
+		If/Functions
+		Classes
+	To IR:
+		Create IR
+		Convert to IR:
+			Literals
+			Classes
+			Functions
+
+Execution of code:
+	Evaluate literals
+	Evaluate Addition, Multiplication, Subtraction, Equality
+	Evaluate Function
+		Recursion
+	Evaluate Constructor
+	Evaluate Dot access
+
+Type checking:
+	Assertion:
+		Wrapping if
+		If-not-then-return
+		Parameter with Where
+		Return value with Where
+		Literal evaluation
+		Literal operations evaluation
+	Run-time checking of assertions (only if assertion is needed)
+
+Output to LLVM:
+	Simple test case
+	Operators
+	Functions
+	Classes
+	Garbage Collection
+
+Language Features:
+	Control flow:
+		else
+		loop
+		pattern matching
+		continue(-if)
+		break(-if)
+		yield(-if)
+		return-if
+		defer
+		await
+		check
+	interfaces
+	interface extension
+	primitive collections
+	static new
+	imports
+	modules
+	purity
+	Optional
+	Tuple
+	immutability
+	options
+	enum
+		enum maps
+	first class functions
+	adapters
+		Adapt to interface
+		Adapt to assertions
+		Extension methods
+	magic methods
+	generics
+	variadic generics
+	panic/recover
+	Auto-bubbling errors:
+	Self and self
+	Mutation by re-referencing
+	Named parameters
+	doubles
+	string interpolation and string escapes
+
+Libraries:
+	Date/Time
+	Random
+	Testing
+	Collections
+	Functional
+
+Tooling:
+	Package Manager:
+		Packages are versioned.
+		You can specify the version by using comparisons:  lt 1.0.0, gt 0.5.0
+		Repositories can be hosted, a file path, or a git repo
+		Dependency tree is cached:  If a single dependency is changed, the entire tree doesn't need to be recalculated
+	Code formatter (gofmt)
+	IntelliJ code helpers
+	Debugger
+
+
