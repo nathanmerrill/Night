@@ -5,40 +5,6 @@ import com.nmerrill.night.parsing.BinaryOperator.BinaryOperator
 import scala.reflect.ClassTag
 import scala.util.parsing.combinator.{PackratParsers, RegexParsers}
 
-trait Expression extends Statement{
-
-}
-
-trait Statement {
-
-}
-
-trait Literal extends Expression {
-
-}
-
-object Unit extends Expression
-
-case class LiteralInt(int: String) extends Literal
-case class LiteralString(string: String) extends Literal
-case class LiteralBoolean(bool: Boolean) extends Literal
-case class BinaryOperation(expr1: Expression, operator: BinaryOperator, expr2: Expression) extends Expression
-case class PropertyAccess(expr: Expression, name: String) extends Expression
-case class FunctionCall(expr: Expression, arguments: List[Expression]) extends Expression
-case class If(condition: Expression, truthy: List[Statement], falsy: List[Statement]) extends Expression
-case class Type(_type: String)
-case class VariableDeclaration(name: String, _type: Option[Type], value: Expression) extends Statement
-case class Parameter(name: String, _type: Type)
-case class Clause(expr: Expression)
-case class Function(name: String, parameters: List[Parameter], returnType: Type, clauses: List[Clause], body: List[Statement]) extends Expression
-case class Class(name: String, parameters: List[Parameter], properties: List[VariableDeclaration], functions: List[Function])
-case class Import(path: String)
-case class SourceCode(classes: List[Class], functions: List[Function], imports: List[Import], constants: List[VariableDeclaration])
-
-object BinaryOperator extends Enumeration {
-  type BinaryOperator = Value
-  var Addition, Subtraction, Multiplication, Equals, GreaterThan, LessThan = Value
-}
 
 
 
@@ -102,11 +68,12 @@ class SimpleParsers extends RegexParsers with PackratParsers {
       |comparison
   )
   val block: PackratParser[List[Expression]] = rep(expression)
+  val declaration: PackratParser[VariableDeclaration] =
 
   val _if: PackratParser[If] = (kw("if") ~> expression <~ ws("then")) ~ block ~ (opt(kw("else") ~> block) <~ kw("end")) ^^ {case a~b~c => If(a, b, c.getOrElse(List()))}
   val function: PackratParser[Function] = (kw("fun") ~> identifier <~ "(") ~ parameterList ~ (ws(")") ~> ws(":") ~> _type) ~ (ws("{") ~> block <~ ws("}")) ^^ {case a~b~c~d => Function(a, b, c, List(), d)}
   var _class: PackratParser[Class] = (kw("class") ~> identifier <~ "(") ~ parameterList ~ (ws(")") ~> ws("{") ~> rep(ws(function)) <~ ws("}")) ^^ {case a~b~c => Class(a, b, List(), c)}
-  var _file: PackratParser[SourceCode] = rep(ws(function | _class)) ^^ (a => SourceCode(filterByType[Class](a), filterByType[Function](a), List(), List()))
+  var source: PackratParser[SourceCode] = rep(ws(function | _class)) ^^ (a => SourceCode(filterByType[Class](a), filterByType[Function](a), List(), List()))
 }
 
 object NightParser extends SimpleParsers {
