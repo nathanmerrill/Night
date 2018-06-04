@@ -12,8 +12,9 @@ val ParsebackVersion = "0.3"
 
 libraryDependencies += "com.codecommit" %% "parseback-core" % ParsebackVersion
 
-libraryDependencies += "com.codecommit" %% "parseback-cats" % ParsebackVersion
-// or!
 libraryDependencies += "com.codecommit" %% "parseback-scalaz-72" % ParsebackVersion
-// or!
-libraryDependencies += "com.codecommit" %% "parseback-scalaz-71" % ParsebackVersion
+
+libraryDependencies += "org.scalactic" %% "scalactic" % "3.0.5" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
+
+

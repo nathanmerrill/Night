@@ -77,6 +77,11 @@ class SimpleParsers extends RegexParsers with PackratParsers {
 }
 
 object NightParser extends SimpleParsers {
+
+  def parseSource(code: String): ParseResult[SourceCode] = {
+    parseAll(source, code)
+  }
+
   def main(args: Array[String]): Unit = {
     parseAll(function,
       """
