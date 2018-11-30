@@ -8,6 +8,7 @@ libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % 
 
 resolvers += "bintray-djspiewak-maven" at "https://dl.bintray.com/djspiewak/maven"
 
+
 val ParsebackVersion = "0.3"
 
 libraryDependencies += "com.codecommit" %% "parseback-core" % ParsebackVersion
@@ -17,4 +18,4 @@ libraryDependencies += "com.codecommit" %% "parseback-scalaz-72" % ParsebackVers
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.0.5" % "test"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
-
+libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.0.4"

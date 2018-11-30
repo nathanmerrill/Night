@@ -1,0 +1,7 @@
+# Any line starting with pound sign is ignored
+# Errors consist of a unique integer code followed by a dash, then the message
+# Messages can contain named parameters surrounded by curly braces
+# Example:
+# 1010 - Sample error message {Sample parameter}
+
+#
