@@ -1,13 +1,12 @@
 package com.nmerrill.night.parsing
-import fastparse.Parsed.Success
-import fastparse._
-import scalaz.std.{function, int}
-
+import com.sun.xml.internal.bind.v2.model.core.TypeRef
+import fastparse.internal.Instrument
+import fastparse.{Parsed, _}
+import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 
-class SimpleParsers {
-  def parseBool[_: P] = P("false" | "true")
+object SimpleParsers {
 
 //class SimpleParsers extends RegexParsers with PackratParsers {
 //
@@ -76,34 +75,24 @@ class SimpleParsers {
 //  var source: PackratParser[SourceCode] = rep(ws(function | _class)) ^^ (a => SourceCode(filterByType[Class](a), filterByType[Function](a), List(), List()))
 }
 
-object NightParser extends SimpleParsers {
+object NightParser {
 
-  case class ParseError(message: String, line: Int, column: Int)
+  def parseBool[_: P] :P[LiteralBoolean] = P("false".! | "true".!).map(_.eq("true")).map(LiteralBoolean)
 
-  private val classParsers = Map[java.lang.Class[_], () => P[_]](
-//    (classOf[LiteralInt], int),
-//    (classOf[LiteralString], string),
-//    (classOf[Type], _type),
-//    (classOf[Parameter], parameter),
-//    (classOf[Expression], expression),
-//    (classOf[If], expression),
-//    (classOf[Function], function),
-//    (classOf[Class], _class),
-//    (classOf[SourceCode], source)
-  )
+
+  def parse[T](code: String, tag: TypeTag[T]): Parsed[T] = {
+    val tag: TypeTag[T] = typeTag[T]
+
+    if (tag.tpe <:< typeOf[LiteralBoolean]) {
+      return fastparse.parse(code, parseBool(_))
+    }
+
+//    typeTag[T] match {
+//      case typeTag[LiteralBoolean] => fastparse.parse(code, parseBool(_))
+//    }
 //
-  def parse[T](code: CharSequence)(implicit tag: ClassTag[T]):Either[ParseError, T] = {
-      tag match {
-        case LiteralBoolean.getClass => parseBool(code)
-      }
-//    if (!classParsers.contains(tag.runtimeClass)){
-//      throw new RuntimeException("Invalid class: "+tag.runtimeClass.getName)
-//    }
-//    val parser: NightParser.Parser[_] = classParsers(tag.runtimeClass)
-//    parseAll(parser, code).asInstanceOf[ParseResult[T]] match {
-//      case Success(matched, _) => Right(matched)
-//      case NoSuccess(result, next) => Left(ParseError(result, next.pos.line, next.pos.column))
-//    }
+//    fastparse.parse(code, parseBool(_))
+    1
   }
 
   def main(args: Array[String]): Unit = {

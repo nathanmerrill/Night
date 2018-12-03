@@ -1,6 +1,6 @@
 package com.nmerrill.night.parsing
 
-
+import fastparse.Parsed
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.ClassTag
@@ -10,15 +10,16 @@ class ParserSpec extends FlatSpec with Matchers {
 
   def parseSuccess[T](code: String, expected: T)(implicit tag: ClassTag[T]){
     val result = NightParser.parse[T](code)
-    result.isRight shouldBe true
-    result.right.get shouldBe expected
+    result.isSuccess shouldBe true
+    result.get shouldBe expected
   }
 
   def parseFailure[T](code: String, message: String)(implicit tag: ClassTag[T]){
     val result = NightParser.parse[T](code)
-    result.isLeft shouldBe true
-    result.left.get shouldBe a [NightParser.ParseError]
-    result.left.get.message should include (message)
+    result.isSuccess shouldBe false
+    result shouldBe a [Parsed.Failure]
+    val Parsed.Failure(failureString, _, _) = result
+    failureString should include (message)
   }
 
   "The parser" should "handle integers" in {

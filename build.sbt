@@ -19,3 +19,4 @@ libraryDependencies += "org.scalactic" %% "scalactic" % "3.0.5" % "test"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
 libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.0.4"
+libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
