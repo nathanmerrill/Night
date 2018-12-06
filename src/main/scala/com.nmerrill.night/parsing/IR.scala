@@ -4,6 +4,7 @@ import com.nmerrill.night.parsing.BinaryOperator.BinaryOperator
 import com.nmerrill.night.parsing.DeclarationModifier.DeclarationModifier
 import com.nmerrill.night.parsing.FlowStatementType.FlowStatementType
 import com.nmerrill.night.parsing.UnaryOperator.UnaryOperator
+import com.sun.org.apache.xpath.internal.operations.{And, Or}
 
 
 trait Statement {
@@ -44,7 +45,11 @@ case class SourceCode(classes: List[Class], functions: List[Function], imports: 
 
 object BinaryOperator extends Enumeration {
   type BinaryOperator = Value
-  var Addition, Subtraction, Multiplication, Equals, GreaterThan, LessThan = Value
+  var Addition, Subtraction, Multiplication, IntegerDivision, Modulo,
+  Equals, NotEquals,
+  GreaterThan, LessThan, GreaterThanOrEquals, LessThanOrEquals,
+  And, Or
+  = Value
 }
 
 object UnaryOperator extends Enumeration {

@@ -2,7 +2,7 @@ package com.nmerrill.night.parsing
 import com.sun.xml.internal.bind.v2.model.core.TypeRef
 import fastparse.internal.Instrument
 import fastparse.{Parsed, _}
-import scala.reflect.runtime.universe._
+import NoWhitespace._
 import scala.reflect.ClassTag
 
 
@@ -27,15 +27,8 @@ object SimpleParsers {
 //  def kw[T](parser: Parser[T]): Parser[T] ={
 //    ws(parser) <~ whiteSpaceWithNewline
 //  }
-//
-//  def bool: Parser[LiteralBoolean]   = """true|false""".r       ^^ { a => LiteralBoolean(a.eq("true")) }
-//  def int: Parser[LiteralInt]    = """(0|-?[1-9]\d*)""".r       ^^ LiteralInt
-//  def singleQuoteString: Parser[LiteralString] = """'[^\']*'""".r   ^^ { a => LiteralString(a.substring(1, a.length-1)) }
-//  def doubleQuoteString: Parser[LiteralString] = """"[^\"]*"""".r   ^^ { a => LiteralString(a.substring(1, a.length-1)) }
+
 //  def identifier: Parser[String] = ws("""[_a-zA-Z][_a-zA-Z0-9]*""".r)
-//
-//  def string: Parser[LiteralString] = singleQuoteString | doubleQuoteString
-//  def literal: Parser[Literal] = ws(bool | int | string)
 //
 //  def _type: Parser[Type] = identifier ^^ Type
 //
@@ -43,23 +36,6 @@ object SimpleParsers {
 //
 //  def parameterList: Parser[List[Parameter]] = repsep(parameter, ws(","))
 //
-//  //noinspection ForwardReference
-//  val fact: PackratParser[Expression] = (
-//       fact~(kw("*")~>literal) ^^ {case x~y => BinaryOperation(x, BinaryOperator.Multiplication, y)}
-//      |ws("(")~>expression<~ws(")")
-//      |literal
-//    )
-//  val term: PackratParser[Expression] = (
-//       term~(kw("+")~>fact) ^^ {case x~y => BinaryOperation(x, BinaryOperator.Addition, y)}
-//      |term~(kw("-")~>fact) ^^ {case x~y => BinaryOperation(x, BinaryOperator.Subtraction, y)}
-//      |fact
-//    )
-//  val comparison: PackratParser[Expression] = (
-//       comparison~(kw("lt")~>term) ^^ {case x~y => BinaryOperation(x, BinaryOperator.LessThan, y)}
-//      |comparison~(kw("gt")~>term) ^^ {case x~y => BinaryOperation(x, BinaryOperator.GreaterThan, y)}
-//      |comparison~(kw("eq")~>term) ^^ {case x~y => BinaryOperation(x, BinaryOperator.Equals, y)}
-//      |term
-//    )
 //  //noinspection ForwardReference
 //  val expression: PackratParser[Expression] = (
 //      expression~(ws(".")~>identifier) ^^ {case x~y => PropertyAccess(x, y)}
@@ -77,23 +53,84 @@ object SimpleParsers {
 
 object NightParser {
 
-  def parseBool[_: P] :P[LiteralBoolean] = P("false".! | "true".!).map(_.eq("true")).map(LiteralBoolean)
+  private def bool[_: P]: P[LiteralBoolean] = P(("false" | "true").!).map(_.eq("true")).map(LiteralBoolean)
+  private def integer[_: P]: P[LiteralInt] = P( ("-".? ~ CharIn("0-9").rep(1)).! ).map(LiteralInt)
+  private def singleQuoteString[_: P]: P[LiteralString] = P( "\'" ~/ CharsWhile(c => c != '\'').! ~ "\'").map(LiteralString)
+  private def doubleQuoteString[_: P]: P[LiteralString] = P( "\"" ~/ CharsWhile(c => c != '\"').! ~ "\"").map(LiteralString)
+  private def string[_: P]: P[LiteralString] = P(singleQuoteString | doubleQuoteString)
+  private def literal[_: P]: P[Literal] = P(string | bool | integer)
 
+  private def parens[_: P]: P[Expression] = P( "(" ~/ and ~ ")" )
+  private def factor[_: P]: P[Expression] = P( literal | parens )
+  private def divMul[_: P]: P[Expression] = P( factor ~ (StringIn("*","div","mod").! ~/ factor).rep ).map(combineBinaryOperators)
+  private def addSub[_: P]: P[Expression] = P( divMul ~ (CharIn("+\\-").! ~/ divMul).rep ).map(combineBinaryOperators)
+  private def compare[_: P]: P[Expression] = P( addSub ~ (StringIn("lt","gt","eq","neq","lteq","gteq").! ~/ addSub).rep).map(combineComparisons)
+  private def or[_: P]: P[Expression] = P( compare ~ ("or".! ~/ compare).rep).map(combineBinaryOperators)
+  private def and[_: P]: P[Expression] = P( or ~ ("and".! ~/ or).rep).map(combineBinaryOperators)
+  private def expr[_: P]: P[Expression]   = P( and ~ End )
 
-  def parse[T](code: String, tag: TypeTag[T]): Parsed[T] = {
-    val tag: TypeTag[T] = typeTag[T]
-
-    if (tag.tpe <:< typeOf[LiteralBoolean]) {
-      return fastparse.parse(code, parseBool(_))
-    }
-
-//    typeTag[T] match {
-//      case typeTag[LiteralBoolean] => fastparse.parse(code, parseBool(_))
-//    }
-//
-//    fastparse.parse(code, parseBool(_))
-    1
+  private def foldExpression(f: (Expression, String, Expression) => Expression)(tup: (Expression, Seq[(String, Expression)])): Expression = {
+    val (operand, operations) = tup
+    operations.foldLeft(operand)((left, tup2) => {
+      val (operator, right) = tup2
+      f(left, operator, right)
+    })
   }
+
+  private def combineBinaryOperators: ((Expression, Seq[(String, Expression)])) => Expression =
+    foldExpression( (left, op, right) =>
+      BinaryOperation(left, op match {
+        case "*" => BinaryOperator.Multiplication
+        case "+" => BinaryOperator.Addition
+        case "-" => BinaryOperator.Subtraction
+        case "div" => BinaryOperator.IntegerDivision
+        case "mod" => BinaryOperator.Modulo
+        case "and" => BinaryOperator.And
+        case "or" => BinaryOperator.Or
+      }, right)
+    )
+
+  private def combineComparisons(tup: (Expression, Seq[(String, Expression)])): Expression = {
+    val (operand, operations) = tup
+    val leftOperands = operand +: operations.map(_._2)
+    val comparisons = leftOperands.zip(operations).map(tup => {
+      val (left, tup2) = tup
+      val (op, right) = tup2
+      BinaryOperation(left, op match {
+        case "lt" => BinaryOperator.LessThan
+        case "gt" => BinaryOperator.GreaterThan
+        case "eq" => BinaryOperator.Equals
+        case "neq" => BinaryOperator.NotEquals
+        case "lteq" => BinaryOperator.LessThanOrEquals
+        case "gteq" => BinaryOperator.GreaterThanOrEquals
+      }, right)
+    })
+    comparisons.reduceLeft((left, right) => {
+      BinaryOperation(left, BinaryOperator.And, right)
+    })
+  }
+
+  def parseBool(code: String): Parsed[LiteralBoolean] = {
+    fastparse.parse(code, bool(_))
+  }
+
+  def parseInteger(code: String): Parsed[LiteralInt] = {
+    fastparse.parse(code, integer(_))
+  }
+
+  def parseString(code: String): Parsed[LiteralString] = {
+    fastparse.parse(code, string(_))
+  }
+
+  def parseLiteral(code: String): Parsed[Literal] = {
+    fastparse.parse(code, literal(_))
+  }
+
+  def parseExpression(code: String): Parsed[Expression] = {
+    fastparse.parse(code, expr(_))
+  }
+
+
 
   def main(args: Array[String]): Unit = {
 //    parse[Function](
