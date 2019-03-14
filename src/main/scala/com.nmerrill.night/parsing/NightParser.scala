@@ -54,7 +54,7 @@ object SimpleParsers {
 object NightParser {
 
   private def bool[_: P]: P[LiteralBoolean] = P(("false" | "true").!).map(_.eq("true")).map(LiteralBoolean)
-  private def integer[_: P]: P[LiteralInt] = P( ("-".? ~ CharIn("0-9").rep(1)).! ).map(LiteralInt)
+  private def integer[_: P]: P[LiteralInt] = P( ("-".? ~ CharIn("0-9").rep(1)).! ~ &(CharPred(c => !c.isLetter && c != '.') | End)).map(LiteralInt).opaque("integer")
   private def singleQuoteString[_: P]: P[LiteralString] = P( "\'" ~/ CharsWhile(c => c != '\'').! ~ "\'").map(LiteralString)
   private def doubleQuoteString[_: P]: P[LiteralString] = P( "\"" ~/ CharsWhile(c => c != '\"').! ~ "\"").map(LiteralString)
   private def string[_: P]: P[LiteralString] = P(singleQuoteString | doubleQuoteString)
@@ -111,7 +111,9 @@ object NightParser {
   }
 
   def parseBool(code: String): Parsed[LiteralBoolean] = {
-    fastparse.parse(code, bool(_))
+    fastparse.parse(code, parser => {
+      bool(parser)
+    })
   }
 
   def parseInteger(code: String): Parsed[LiteralInt] = {
