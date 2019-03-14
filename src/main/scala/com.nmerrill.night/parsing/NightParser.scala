@@ -1,9 +1,6 @@
 package com.nmerrill.night.parsing
-import com.sun.xml.internal.bind.v2.model.core.TypeRef
-import fastparse.internal.Instrument
 import fastparse.{Parsed, _}
 import NoWhitespace._
-import scala.reflect.ClassTag
 
 
 object SimpleParsers {
